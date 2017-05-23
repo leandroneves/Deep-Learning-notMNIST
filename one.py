@@ -10,6 +10,8 @@ from sklearn.linear_model import LogisticRegression
 from six.moves.urllib.request import urlretrieve
 from six.moves import cPickle as pickle 
 
+""" Downloading imagens for traing and test """
+
 url = 'https://commondatastorage.googleapis.com/books1000/'
 last_percent_reported = None
 data_root = '.' #Local de armazenamento
@@ -46,3 +48,31 @@ def maybe_download (filename, expected_bytes, force=False):
 
 train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
 test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
+
+""" Extract files """
+
+num_classes = 10
+np.random.seed(133)
+
+def maybe_extract (filename, force=False):
+    root = os.path.splitext(os.path.splitext(filename)[0])[0] #remove .tar.gz
+    if os.path.isdir(root) and not force:
+        print('%s already present - Skipping extraction of %s.' % (root, filename))
+    else:
+        print('Extracting data for %s. This may take a while. Please wait.' % root)
+        tar = tarfile.open(filename)
+        sys.stdout.flush()
+        tar.extractall(data_root)
+        tar.close()
+    data_folders = [
+        os.path.join(root, d) for d in sorted(os.listdir(root))
+        if os.path.isdir(os.path.join(root,d))]
+    if len(data_folders) != num_classes:
+        raise Exception(
+            'Expected %d folders, one per class. Found %d instead.' % (
+                num_classes, len(data_folders)))
+    print(data_folders)
+    return data_folders
+
+train_floders = maybe_extract(train_filename)
+test_folders = maybe_extract(test_filename)
